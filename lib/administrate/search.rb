@@ -89,11 +89,25 @@ module Administrate
         table_name = query_table_name(attr)
         searchable_fields(attr).map do |field|
           column_name = column_to_query(field)
-          "LOWER(CAST(#{table_name}.#{column_name} AS CHAR(256))) LIKE ?"
+          query_for_attribute(attribute_types[attr], "#{table_name}.#{attr_name}")
         end.join(" OR ")
       end.join(" OR ")
     end
 
+    def query_for_attribute(attribute, field)
+      attribute_class =
+        if attribute.is_a?(Administrate::Field::Deferred)
+          attribute.deferred_class
+        else
+          attribute.class
+        end
+
+      if attribute_class == Administrate::Field::Number
+        "CAST(#{field} AS CHAR(256)) ILIKE ?"
+      else
+        "#{field} ILIKE ?"
+      end
+    end
     def searchable_fields(attr)
       return [attr] unless association_search?(attr)
 
