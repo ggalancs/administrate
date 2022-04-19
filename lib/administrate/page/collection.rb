@@ -10,7 +10,7 @@ module Administrate
       def attributes_for(resource)
         attribute_names.map do |attr_name|
           attribute_field(dashboard, resource, attr_name, :index)
-        end
+        end.compact
       end
 
       def attribute_types

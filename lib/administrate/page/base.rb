@@ -26,6 +26,8 @@ module Administrate
       private
 
       def attribute_field(dashboard, resource, attribute_name, page)
+        return unless resource.respond_to?(attribute_name)
+
         value = get_attribute_value(resource, attribute_name)
         field = dashboard.attribute_type_for(attribute_name)
         field.new(attribute_name, value, page, resource: resource)

@@ -20,7 +20,7 @@ module Administrate
 
         dashboard.form_attributes(action).map do |attribute|
           attribute_field(dashboard, resource, attribute, :form)
-        end
+        end.compact
       end
 
       def page_title

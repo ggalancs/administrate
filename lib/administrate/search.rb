@@ -1,5 +1,7 @@
-require "active_support/core_ext/module/delegation"
-require "active_support/core_ext/object/blank"
+# frozen_string_literal: true
+
+require 'active_support/core_ext/module/delegation'
+require 'active_support/core_ext/object/blank'
 
 module Administrate
   class Search
@@ -21,7 +23,7 @@ module Administrate
       end
 
       def terms
-        @terms.join(" ")
+        @terms.join(' ')
       end
 
       def to_s
@@ -59,8 +61,8 @@ module Administrate
         @scoped_resource.all
       else
         results = search_results(@scoped_resource)
-        results = filter_results(results)
-        results
+        filter_results(results)
+
       end
     end
 
@@ -68,6 +70,7 @@ module Administrate
 
     def apply_filter(filter, filter_param, resources)
       return resources unless filter
+
       if filter.parameters.size == 1
         filter.call(resources)
       else
@@ -77,7 +80,7 @@ module Administrate
 
     def filter_results(resources)
       query.filters.each do |filter_query|
-        filter_name, filter_param = filter_query.split(":")
+        filter_name, filter_param = filter_query.split(':')
         filter = valid_filters[filter_name]
         resources = apply_filter(filter, filter_param, resources)
       end
@@ -89,9 +92,29 @@ module Administrate
         table_name = query_table_name(attr)
         searchable_fields(attr).map do |field|
           column_name = column_to_query(field)
-          "LOWER(CAST(#{table_name}.#{column_name} AS CHAR(256))) LIKE ?"
-        end.join(" OR ")
-      end.join(" OR ")
+          query_for_attribute(attribute_types[attr], "#{table_name}.#{column_name}")
+        end.join(' OR ')
+      end.join(' OR ')
+    end
+
+    def query_for_attribute(attribute, field)
+      attribute_class =
+        if attribute.is_a?(Administrate::Field::Deferred)
+          # HACK: make search work for belongs_to attribute searching by id
+          if attribute.options[:searchable_field] == :id
+            Administrate::Field::Number
+          else
+            attribute.deferred_class
+          end
+        else
+          attribute.class
+        end
+
+      if attribute_class == Administrate::Field::Number
+        "CAST(#{field} AS CHAR(256)) ILIKE ?"
+      else
+        "#{field} ILIKE ?"
+      end
     end
 
     def searchable_fields(attr)
@@ -112,9 +135,9 @@ module Administrate
     end
 
     def search_results(resources)
-      resources.
-        left_joins(tables_to_join).
-        where(query_template, *query_values)
+      resources
+        .left_joins(tables_to_join)
+        .where(query_template, *query_values)
     end
 
     def valid_filters
@@ -141,8 +164,8 @@ module Administrate
           end
         ActiveRecord::Base.connection.quote_table_name(unquoted_table_name)
       else
-        ActiveRecord::Base.connection.
-          quote_table_name(@scoped_resource.table_name)
+        ActiveRecord::Base.connection
+                          .quote_table_name(@scoped_resource.table_name)
       end
     end
 
